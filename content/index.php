@@ -3,6 +3,15 @@
 // Holds the user name, *if* login is validated
 $user = $_REQUEST["engr108user"];
 
+// Show an alert, because something went badly wrong.
+function alert($msg) {
+  echo "<script>";
+  echo "alert('$msg');";
+  echo "window.location.href='".$_SERVER['REQUEST_URI'] . "'";
+  echo "</script>\n";
+  die();
+}
+
 function title()
 {
   print "ENGR 108 Signin Page";
@@ -10,33 +19,47 @@ function title()
 
 $hack = "";
 
-
+      $alert = "Login problem"; 
+      
+      
 // First, check for login request.
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
+  $debug = "";
 
     if (isset($_REQUEST["logout"])) {
       setcookie("engr108user","",time() - 3600);
+      $debug = "#logout";
 
     } elseif (isset($_REQUEST["email"])) {
 
       // Check _REQUEST["pin"] for hash.
       // If so, please proceed
-      setcookie("engr108user",$_REQUEST["email"],time() + 3600);
+      if ($_REQUEST["email"] != "") {
+        setcookie("engr108user",$_REQUEST["email"],time() + 3600);
+        $debug = "#login";
+
+        alert("Login rejected. Please try again.");
+
+      } else {
+        // Just redirect, please.
+        $debug = "#non-login";
+      }
 
     } else {
       // Do nothing, just redirect.
+
+
+      $alert = "Login problem"; 
+      $debug = "#other";
+
     }
 
-    header( "Location: " . $_SERVER['REQUEST_URI'], 303);
+    header( "Location: " . $_SERVER['REQUEST_URI'] . $debug, 303);
     die();
 }
 
-// Login depends on engr108user being set.
-
-//cho $_REQUEST["eecs168"];
-
-//  $hack = "<h1>NOT POST</h1>";
+// We are now commited to the page.
   
 ?><!DOCTYPE html>
 <html lang="en">
@@ -52,11 +75,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/bootstrap-theme.css" rel="stylesheet">
 
 
   </head>
 
   <body>
+
 
    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
       <div class="container">
@@ -67,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">ENGR 108</a>
+          <div class="navbar-brand">ENGR 108</div>
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
@@ -122,10 +147,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <?php echo $_REQUEST["eecs168"]; ?>
 
-    <?php phpinfo(); ?>
 
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
   </body>
 </html>
