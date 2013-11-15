@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="ico/favicon.png">
+
+    <title>ENGR 108</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/bootstrap-theme.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <link href="css/customize.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+  
+
+<div class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#"><b>Escape from Crater Lake</b></a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav ">
+            <li class=""><a href="./">Pause</a></li>
+            <li class=""><a href="./">Restart</a></li>
+          </ul>
+
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="../navbar/">Login</a></li>
+            <li class=""><a href="./">Edit Game</a></li>
+            <li class="active"><a href="../navbar-fixed-top/">Introduction</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+
+      <div class="container">
+        <div class="col-md-8">
+          <form class="form-horizontal" role="form">
+
+            <div class="form-group">
+              <div class="col-sm-3">
+                <button type="submit" class="btn btn-default">Pause</button>
+                <button type="submit" class="btn btn-default">Restart</button>
+              </div>
+              <label for="inputEmail3" class="col-sm-2 control-label">Direction</label>
+              <div class="col-sm-7" style="padding-top: 0.8em">
+                <div id="direction"></div>
+              </div>
+            </div>
+  
+          </form>
+
+          <HR/>
+
+              <canvas id="canvas" style="border: 1px solid red">
+              </canvas>
+          Game!
+
+        </div>
+        <div class="col-md-4">
+
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Escape from Crater Lake</h3>
+            </div>
+            <div class="panel-body">
+
+                <p>Welcome to Escape from Crater Lake!</p>
+                <ul>
+                  <li>Your objective is to row off the lake, <u>without</u> Bigfoot catching you.</li>
+                  <li>You can control your speed and direction.</li>
+                  <li>If you land on a green segment,you win.</li>
+                  <li>If you land on a red segment, you lose.</li>
+                  <li>You have one minute. </li>
+                </ul>
+                <p>Good luck!</p>
+
+                <hr>
+
+                <p>If you want to edit the game, then please log in</a>
+                <form class="" method="POST">
+                  <div class="form-group">
+                    <input type="text" placeholder="Email" name="email" class="form-control">
+                  </div>
+                  <button type="submit" class="btn btn-primary">Sign in</button>
+                </form>
+
+
+            </div>
+          </div>
+
+      </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="js/jquery-1.10.2.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script>
+    $(function() {
+      $("#direction").slider();
+    });
+    </script>
+  </body>
+</html>
