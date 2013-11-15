@@ -1,7 +1,18 @@
 <?php
 
 // Holds the user name, *if* login is validated
-$user = $_REQUEST["engr108user"];
+$user = $_COOKIE["engr108user"];
+$pin  = $_COOKIE["engr108pin"];
+
+if (isset($user)) {
+  if (isset($pin)) {
+    $state = "active";
+  } else {
+    $state = "pin";
+  }
+} else {
+  $state = "splash";
+}
 
 // Show an alert, because something went badly wrong.
 function alert($msg) {
@@ -29,6 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (isset($_REQUEST["logout"])) {
       setcookie("engr108user","",time() - 3600);
+      setcookie("engr108pin","",time() + 3600);
       $debug = "#logout";
 
     } elseif (isset($_REQUEST["email"])) {
@@ -39,16 +51,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         setcookie("engr108user",$_REQUEST["email"],time() + 3600);
         $debug = "#login";
 
-        alert("Login rejected. Please try again.");
+        // mail ( "andygill@ku.edu", "Hello", "World");
+
+//          alert("Login rejected. Please try again.");
 
       } else {
         // Just redirect, please.
         $debug = "#non-login";
       }
 
+    } elseif (isset($_REQUEST["pin"])) {
+      // Assuming engr108user is here
+      setcookie("engr108pin",$_REQUEST["pin"],time() + 3600);
+      $debug = "#pin";
+
     } else {
       // Do nothing, just redirect.
-
 
       $alert = "Login problem"; 
       $debug = "#other";
@@ -57,6 +75,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     header( "Location: " . $_SERVER['REQUEST_URI'] . $debug, 303);
     die();
+
+  phpinfo();
 }
 
 // We are now commited to the page.
@@ -76,6 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/bootstrap-theme.css" rel="stylesheet">
+    <link href="css/customize.css" rel="stylesheet">
 
 
   </head>
@@ -99,30 +120,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <li class="active"><a href="#">Home</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
+            <li> 
+              <a class="btn btn-primary">Log out</a></li>
           </ul>
 
-<?php if (isset($user)) { ?>
-
-          <form class="navbar-form navbar-right" method="POST">
-            <input type="hidden" name="logout">
-            <button type="submit" class="btn btn-primary">Log out</button>
-          </form>
-          <div class="nav navbar-right">
-            <a class="navbar-brand" href="#">Logged in as: <? echo $user; ?></a>
-          </div>
-
-
-<?php } else { ?>
+<?php if ($state == "splash") { ?>
 
           <form class="navbar-form navbar-right" method="POST">
             <div class="form-group">
               <input type="text" placeholder="Email" name="email" class="form-control">
             </div>
-            <div class="form-group">
-              <input type="password" placeholder="ENGR 108 PIN" name="pin" class="form-control">
-            </div>
             <button type="submit" class="btn btn-primary">Sign in</button>
           </form>
+
+
+<?php } else { ?>
+
+          <form class="navbar-form navbar-right" method="POST">
+            <input type="hidden" name="logout">
+            <button type="submit" class="btn btn-primary">Log out</button>
+          </form>
+          <div class="navbar-brand nav navbar-right">
+            <?php 
+              if ($state == "pin") {
+                echo "Logging in as $user ($state)"; 
+              } elseif ($state == "active") {
+                echo "Logged in as $user ($state)";                 
+              } else {
+                echo "Impossible ($state)";
+//                  alert("The impossible happens!");
+              }
+            ?>
+          </div>
 
 <?php } ?>
 
@@ -131,23 +160,81 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       </div>
     </div>
 
- 
+<?php if ($state == "splash") { ?>
 
-    <div class="jumbotron">
       <div class="container">
+  <BR>
+    <div class="jumbotron">
         <h1>ENGR 108</h1>
-        <p>Welcome to ENGR 108!</p>
-        <p>Please sign in above with your ENGR 108 PIN.</p>
+        <p>Welcome to ENGR 108 and good luck escaping from Crater Lake.</p>
+        <p>Please sign in with your KU email and ENGR 108 PIN.</p>
+
+        <p>If you need a PIN, please email <tt>andygill@ku.edu</tt> from your KU account, with <BR>Subject: "ENGR 108 Password"</p>
       </div>
     </div>
 
-    <?php echo $hack; ?>
+<?php } elseif ($state == "pin") { ?>
 
-    <?php if (isset($user)) { echo "($user)"; } else { echo "[ NOT SET ]"; } ?>
+        <br>
 
-    <?php echo $_REQUEST["eecs168"]; ?>
+      <div class="container">
+        <div class="col-sm-6 col-sm-offset-3">
+        <div class="panel  panel-danger">
+          <div class="panel-heading">
+            <h3 class="panel-title">ENGR 108 Authentication</h3>
+          </div>
+          <div class="panel-body">
+            <form class="form-horizontal" method="POST" role="form">
+              <div class="form-group">
+                <label for="inputEmail3" class="col-sm-4 control-label">PIN</label>
+                <div class="col-sm-4">
+                  <input type="number" class="form-control" id="inputEmail3" name="pin" placeholder="PIN">
+                </div>
+                <div class="col-sm-4">
+                  <button type="submit" class="btn btn-default">Sign in</button>
+                </div>
+              </div>
+           </form>
+
+            <HR>
+
+            <form class="form-horizontal" role="form">
+                <div class="form-group">
+                  <p class="col-sm-6 col-sm-offset-2">
+                    If you do not have a PIN, or have forgotten it, 
+                    you can request to have one mailed to you.
+                  </p>
+                  <div class="col-sm-4">
+                    <button type="submit" class="btn btn-default">Mail PIN</button>
+                  </div>
+                </div>
+
+</form>
 
 
+          </div>
+        </div>
+</div>
+
+
+      </div>
+
+<?php } else { ?>
+
+  
+      <br/>
+
+      <div class="container">
+        <div class="col-md-8">
+          Game!
+        </div>
+        <div class="col-md-4">
+            <textarea class="form-control" rows="20"></textarea>
+      </div>
+    </div>
+
+<?php } ?>
+  
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
