@@ -33,19 +33,20 @@
           <a class="navbar-brand" href="#"><b>Escape from Crater Lake</b></a>
         </div>
         <div class="navbar-collapse collapse">
-          <ul class="nav navbar-nav ">
-            <li class=""><a href="./">Pause</a></li>
-            <li class=""><a href="./">Restart</a></li>
+          <ul class="nav navbar-nav">
+            <li class=""><a id="pause-button">Pause</a></li>
+            <li class=""><a id="restart-button">Restart</a></li>
           </ul>
-
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="../navbar/">Login</a></li>
-            <li class=""><a href="./">Edit Game</a></li>
-            <li class="active"><a href="../navbar-fixed-top/">Introduction</a></li>
+            <li><a id="login-button">Login</a></li>
+            <li class=""><a id="edit-button">Edit Game</a></li>
+            <li class="active"><a id="home-button">Introduction</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </div>
+
+    <div id="debugging"></div>
 
       <div class="container">
         <div class="col-md-8">
@@ -120,6 +121,7 @@
             },  
               defaults: {  
                 // Location of cursor
+                go      : true,
                 offsetX : 0,
                 offsetY : 0,
                 x     : 0,
@@ -134,6 +136,16 @@
       var x;
       var y;
       
+      var timeoutID; // Should this be in a model?
+
+      // Step says, at some point *soon* I will step the world,
+      // and this will trigger a change in the 
+      var step = function () {
+          game.set('x',game.get('x') + 1);
+          timeoutID = window.setTimeout(step, 100);
+      }
+
+      $("#debugging").html("start");
       var GameView = Backbone.View.extend({  
         el: $('#game-box'),
         tagName : "div",  
@@ -144,27 +156,74 @@
         initialize : function() {  
           // code for rendering the HTML for the view  
           game.on('change', this.render);
+          step();
           this.render();
         },
         render: function() {
 //          this.$el.html(game.get("x"));
-          var context = $("#canvas").get(0).getContext('2d');  
+          var canvas = $("#canvas").get(0);
+          var context = canvas.getContext('2d');  
+
+          context.clearRect(0, 0, canvas.width, canvas.height);
           context.beginPath();
           context.moveTo(100, 100);
-          context.lineTo(100, 200);
-          context.lineTo(200, 200);
+          context.lineTo(game.get('x'), 200);
+          context.lineTo(game.get('offsetX'), game.get('offsetY'));
           context.stroke();
-      
+
+/*
+          // Next, check in state for redraw is needed
+          if (game.get('go')) {
+
+          } else {
+            // If stop(ing), do not re-render            
+            window.clearTimeout(timeoutID);
+          }
+*/
 //              $("#game").html(game.get("offsetX"));
 //            x = $("#game");
         },
-        mousemove : function (event) {
-            game.set({ offsetX: event.offsetX, offsetY: event.offsetY });
-        }
+        mousemove : function (ev) {
+          $("#debugging").html("move" );
+            var targetOffset = $(ev.target).offset();
+            // From https://gist.github.com/pedromg/2898946
+            if(typeof ev.offsetX === "undefined" || typeof ev.offsetY === "undefined") {
+              var targetOffset = $(ev.target).offset();
+              ev.offsetX = ev.pageX - targetOffset.left;
+              ev.offsetY = ev.pageY - targetOffset.top;
+            }
+            game.set({ offsetX: ev.offsetX, offsetY: ev.offsetY });
+        },
+        go : function () {
+          
+        },
+        stop : function () {
+          
+        },
+        
 
       });
 
-    var gameView = new GameView({});
+      var gameView = new GameView({});
+
+      var NavView = Backbone.View.extend({  
+        el: $('.nav'),
+        events: {
+          "click #pause-button":    "pause",
+          "click #restart-button":  "restart",
+          "click #login-button":    "login",
+          "click #edit-button":     "edit",
+          "click #home-button":     "home"
+        },
+        pause :   function () { alert("stop"); },
+        restart : function () { alert("stop"); },
+        login :   function () { alert("login"); },
+        edit :    function () { alert("edit"); },
+        home :    function () { alert("home"); }
+      });
+
+      var navView = new NavView({});
+
 
     </script>
   </body>
