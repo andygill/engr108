@@ -47,30 +47,13 @@
       </div>
     </div>
 
-
       <div class="container">
         <div class="col-md-8">
-          <form class="form-horizontal" role="form">
 
-            <div class="form-group">
-              <div class="col-sm-3">
-                <button type="submit" class="btn btn-default">Pause</button>
-                <button type="submit" class="btn btn-default">Restart</button>
-              </div>
-              <label for="inputEmail3" class="col-sm-2 control-label">Direction</label>
-              <div class="col-sm-7" style="padding-top: 0.8em">
-                <div id="direction"></div>
-              </div>
-            </div>
-  
-          </form>
-
-          <HR/>
-
+          <div id="game-box">
               <canvas id="canvas" style="border: 1px solid red">
               </canvas>
-          Game!
-
+          </div>
         </div>
         <div class="col-md-4">
 
@@ -110,14 +93,79 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="js/jquery-1.10.2.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="https://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/underscore.js"></script>
+    <script src="js/backbone.js"></script>
     <script>
     $(function() {
-      $("#direction").slider();
+      
+      $("#canvas").get(0).width = $("#game-box").width();
+      $("#canvas").get(0).height = $("#game-box").width();
+
+      $(window).resize(function () {
+        // Hacky for now
+//        $("#canvas").get(0).width = ?
+//        $("#canvas").get(0).height = $("#game-box").width());
+      });
     });
+
+      $("#canvas").on("mousemove",function () {
+//          alert();
+      });
+
+      var Game = Backbone.Model.extend({  
+            initialize: function(){  
+            },  
+              defaults: {  
+                // Location of cursor
+                offsetX : 0,
+                offsetY : 0,
+                x     : 0,
+                y     : 0,
+                x_vel : 0.01,
+                y_vel : 0.01
+            }  
+        });  
+
+      var game = new Game({});
+
+      var x;
+      var y;
+      
+      var GameView = Backbone.View.extend({  
+        el: $('#game-box'),
+        tagName : "div",  
+        id: "game",
+        events : {
+          "mousemove"  : "mousemove"
+        },
+        initialize : function() {  
+          // code for rendering the HTML for the view  
+          game.on('change', this.render);
+          this.render();
+        },
+        render: function() {
+//          this.$el.html(game.get("x"));
+          var context = $("#canvas").get(0).getContext('2d');  
+          context.beginPath();
+          context.moveTo(100, 100);
+          context.lineTo(100, 200);
+          context.lineTo(200, 200);
+          context.stroke();
+      
+//              $("#game").html(game.get("offsetX"));
+//            x = $("#game");
+        },
+        mousemove : function (event) {
+            game.set({ offsetX: event.offsetX, offsetY: event.offsetY });
+        }
+
+      });
+
+    var gameView = new GameView({});
+
     </script>
   </body>
 </html>
