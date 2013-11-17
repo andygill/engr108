@@ -67,7 +67,7 @@
                 <p>Welcome to Escape from Crater Lake!</p>
                 <ul>
                   <li>Your objective is to row off the lake, <u>without</u> Bigfoot catching you.</li>
-                  <li>You can control your speed and direction.</li>
+                  <li>You can control your direction.</li>
                   <li>If you land on a green segment,you win.</li>
                   <li>If you land on a red segment, you lose.</li>
                   <li>You have one minute. </li>
@@ -101,49 +101,134 @@
     <script src="js/backbone.js"></script>
     <script>
     $(function() {
-      
-      $("#canvas").get(0).width = $("#game-box").width();
-      $("#canvas").get(0).height = $("#game-box").width();
+      var width = $("#game-box").width();
+      $("#canvas").get(0).width = width;
+      $("#canvas").get(0).height = width;
 
       $(window).resize(function () {
         // Hacky for now
 //        $("#canvas").get(0).width = ?
 //        $("#canvas").get(0).height = $("#game-box").width());
       });
-    });
 
-      $("#canvas").on("mousemove",function () {
-//          alert();
-      });
+      var DOCKS = 20;
+      var LAKE_SIZE = 0.75;
 
+      // Hack
+      old_bf_x = 0;
+      old_bf_y = 0;
+
+      var dockNo = function (dir)  {
+        
+        if (dir < 0) {
+          alert("hu!");
+        } else {
+          dir = (dir / (Math.PI * 2)) % 1;                    
+        }
+        // dock zero is at top.
+        var n = Math.floor((1 - dir) * DOCKS);
+        return (n % DOCKS);
+      };
+
+
+      //--------------------------------------------------------
       var Game = Backbone.Model.extend({  
             initialize: function(){  
             },  
               defaults: {  
                 // Location of cursor
-                go      : true,
-                offsetX : 0,
-                offsetY : 0,
-                x     : 0,
-                y     : 0,
-                x_vel : 0.01,
-                y_vel : 0.01
+                go      : true,         // If game is active
+                mouse   : null,         // cursor
+                center  : { x : 0, y : 0 },
+                pos     : { x : 0, y : 0 },
+                wake    : [],
+                dir     : 0,            // direction in radians
+                bigfoot : 0, // Math.PI / 2,  // location of bigfoot
+                size    : width,        // how big the canvas
+                step    : 0,            // just a (stepper) counter
             }  
         });  
 
-      var game = new Game({});
+      var gameModel = new Game({});
 
+
+      // Next, the nav bar
+      //--------------------------------------------------------      
+      var NavModel = Backbone.Model.extend({  
+            initialize: function(){  
+            },  
+              defaults: {  
+                // Which (radio) button is pressed
+                active : 'home'
+            }  
+        });  
+      
+
+      var navModel = new NavModel();
+
+      //--------------------------------------------------------
+      
       var x;
       var y;
       
       var timeoutID; // Should this be in a model?
 
-      // Step says, at some point *soon* I will step the world,
-      // and this will trigger a change in the 
+
       var step = function () {
-          game.set('x',game.get('x') + 1);
-          timeoutID = window.setTimeout(step, 100);
-      }
+        var step = gameModel.get('step');
+        step++;
+        var pos = gameModel.get('pos');  // be careful, this is the original, not a copy
+        var dir = gameModel.get('dir');
+        var mouse = gameModel.get('mouse');
+        var wake  = gameModel.get('wake');
+
+        if (mouse != null) {
+          var controlX = mouse.x - pos.x;
+          var controlY = mouse.y - pos.y;
+//          console.log({controlX: controlX, controlY : controlY });
+          dir = Math.atan2(controlY,controlX);
+//          console.log("dir: " + dir);
+        }
+
+
+        // Add the wake
+        if (step % 5 == 0) {
+          wake.push( { x: pos.x, y: pos.y, dir: dir } );
+        }
+        if (wake.length > 40) {
+          wake.shift(); // throw away the furthest one
+        }
+
+        var bigfoot = gameModel.get('bigfoot');
+        var bigfoot_speed = 4;
+
+        bigfoot += bigfoot_speed / (width * LAKE_SIZE / 2);
+
+
+//        console.log(dockNo(bigfoot));
+
+
+        // Now, we need to compute a vector
+        var xd = Math.cos(dir);
+        var yd = Math.sin(dir);
+
+        // And the updates
+//        console.log("speed: " + Math.sqrt(xd * xd + yd * yd));
+        pos.x += xd;
+        pos.y += yd;
+
+        gameModel.set( { step: step, pos: pos, dir : dir, bigfoot: bigfoot, wake: wake });
+      };
+      
+      // pleaseStep says, at some point *soon* I will step the world.
+      var pleaseStep = function() { 
+        if (timeoutID == null) { // otherwise, one is scheduled anyway
+          timeoutID = setTimeout(function () {
+            timeoutID = null;
+            step();
+          },40);
+        };
+      };
 
       $("#debugging").html("start");
       var GameView = Backbone.View.extend({  
@@ -155,33 +240,136 @@
         },
         initialize : function() {  
           // code for rendering the HTML for the view  
-          game.on('change', this.render);
-          step();
+          gameModel.on('change', this.render);
           this.render();
         },
         render: function() {
-//          this.$el.html(game.get("x"));
+//          this.$el.html(gameModel.get("x"));
           var canvas = $("#canvas").get(0);
           var context = canvas.getContext('2d');  
 
+
+
+          context.save();
+
           context.clearRect(0, 0, canvas.width, canvas.height);
           context.beginPath();
-          context.moveTo(100, 100);
-          context.lineTo(game.get('x'), 200);
-          context.lineTo(game.get('offsetX'), game.get('offsetY'));
+
+          var centerX = Math.floor(canvas.width / 2);
+          var centerY = Math.floor(canvas.height / 2);
+          var scale = Math.min (centerX,centerY);
+          var radius = Math.floor(scale * LAKE_SIZE);
+          var step = gameModel.get('step');
+          var bigfoot = gameModel.get('bigfoot');
+                    
+          context.translate(centerX, centerY);
+
+          context.beginPath();
+          context.arc(0, 0, Math.floor(radius), 0, 2 * Math.PI, false);
+          context.fillStyle = '#0099ff';
+          context.fill();
+          context.lineWidth = 1;
+          context.strokeStyle = 'black';
           context.stroke();
 
-/*
-          // Next, check in state for redraw is needed
-          if (game.get('go')) {
-
-          } else {
-            // If stop(ing), do not re-render            
-            window.clearTimeout(timeoutID);
+          for (var i = 0;i < DOCKS; i++) {
+            var start = i * 2 * Math.PI / DOCKS + 0.01;
+            var end   = (i + 1) * 2 * Math.PI / DOCKS - 0.01;
+            context.save();
+            context.rotate(i * 2 * Math.PI / DOCKS);
+            context.beginPath();
+            context.arc(0, 0, Math.floor(radius), 1 * 2 * Math.PI / DOCKS - 0.01, 0.01, true);
+            context.lineWidth = 10;
+            if (dockNo(bigfoot) == i) {
+              context.strokeStyle = '#ff0000';
+            } else {
+              context.strokeStyle = '#808080'; //            108020';              
+            }
+            context.stroke();
+            context.restore();
           }
-*/
-//              $("#game").html(game.get("offsetX"));
-//            x = $("#game");
+
+          // Print the bigfoot
+          // Printing the boat
+          context.save();
+//          console.log(bigfoot);
+          context.translate(Math.cos(bigfoot) * scale * 0.85,-Math.sin(bigfoot) * scale * 0.85);
+          var bf_x = Math.cos(bigfoot) * scale * 0.75;
+          var bf_y = -Math.sin(bigfoot) * scale * 0.75;
+          var bf_x_s = old_bf_x - bf_x;
+          var bf_y_s = old_bf_y - bf_y;
+          console.log("speed: " + Math.sqrt(bf_x_s * bf_x_s + bf_y_s * bf_y_s));
+          old_bf_x = bf_x;
+          old_bf_y = bf_y;
+
+
+          context.beginPath();
+          context.rect(20, 10, -20, -10);
+          context.fillStyle = 'yellow';
+          context.fill();
+          context.lineWidth = 2;
+          context.strokeStyle = 'black';
+          context.stroke();
+          context.restore();
+
+          // Now, the boat wake
+          var wake = gameModel.get('wake');
+          for(var i = 0;i < wake.length;i++) {
+//            i = wake.length - 1;
+            context.save();
+            context.globalAlpha = 0.7 - 0.7 * (wake.length - i) / wake.length;
+            context.translate(wake[i].x,wake[i].y);
+            context.lineWidth = 1;
+            context.strokeStyle = '#0000ff';
+            context.beginPath();
+            context.arc(0, 0, (wake.length - i) + ((step % 5) / 5), wake[i].dir + Math.PI/4, wake[i].dir + Math.PI/1.2, false);
+            context.stroke();
+
+            context.beginPath();
+            context.arc(0, 0, (wake.length - i) + ((step % 5) / 5), wake[i].dir - Math.PI/4, wake[i].dir - Math.PI/1.2, true);
+            context.stroke();
+            context.restore();
+          }
+
+
+          // Printing the boat
+          context.save();
+          context.translate(gameModel.get('pos').x,gameModel.get('pos').y);
+          context.rotate(gameModel.get('dir'));
+          context.beginPath();
+          context.rect(-10, -5, 20, 10);
+          context.fillStyle = 'yellow';
+          context.fill();
+          context.lineWidth = 2;
+          context.strokeStyle = 'black';
+          context.stroke();
+          context.restore();
+
+
+
+          // Now print the mouse pointer (which is abs)
+
+          var mouse = gameModel.get('mouse');
+          if (mouse != null) {
+            context.save();
+            context.globalAlpha = 0.5;
+            context.translate(mouse.x,mouse.y);
+            context.beginPath();
+            context.arc(0, 0, 30, 0, 2 * Math.PI, false);
+            context.fillStyle = 'green';
+            context.fill();
+            context.restore();
+         }
+
+          // Final restore
+          context.restore();
+
+
+          // Next, request a redraw in the near future (it is an animation)
+          if (gameModel.get('go')) {
+            pleaseStep();
+          }
+
         },
         mousemove : function (ev) {
           $("#debugging").html("move" );
@@ -192,7 +380,11 @@
               ev.offsetX = ev.pageX - targetOffset.left;
               ev.offsetY = ev.pageY - targetOffset.top;
             }
-            game.set({ offsetX: ev.offsetX, offsetY: ev.offsetY });
+            // Now normalize to center of screen
+            var canvas = $("#canvas").get(0);
+
+            gameModel.set({ mouse: { x: ev.offsetX - canvas.width/2- 1, y: ev.offsetY - canvas.height/2 - 2}});
+//            console.log(gameModel.get('mouse'));
         },
         go : function () {
           
@@ -215,16 +407,34 @@
           "click #edit-button":     "edit",
           "click #home-button":     "home"
         },
-        pause :   function () { alert("stop"); },
-        restart : function () { alert("stop"); },
-        login :   function () { alert("login"); },
-        edit :    function () { alert("edit"); },
-        home :    function () { alert("home"); }
+        initialize : function() {  
+          // code for rendering the HTML for the view  
+          navModel.on('change', this.render);
+          this.render();
+        },
+
+        render: function() {
+          $(".nav li").removeClass("active");
+          $(".nav #" + navModel.get('active') + "-button").parent().addClass("active");
+        },
+/*
+     <ul class="nav navbar-nav navbar-right">
+            <li><a id="login-button">Login</a></li>
+            <li class=""><a id="edit-button">Edit Game</a></li>
+            <li class="active"><a id="home-button">Introduction</a></li>
+          </ul>
+  */
+        pause :   function () { gameModel.set('go',false); },
+        restart : function () { gameModel.set('go',true); },
+        login :   function () { navModel.set('active','login'); },
+        edit :   function () { navModel.set('active','edit'); },
+        home :   function () { navModel.set('active','home'); }
       });
 
       var navView = new NavView({});
 
-
+    });
+    
     </script>
   </body>
 </html>
