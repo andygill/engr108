@@ -46,13 +46,11 @@
       </div>
     </div>
 
-    <div id="debugging"></div>
-
       <div class="container">
         <div class="col-md-8">
 
           <div id="game-box">
-              <canvas id="canvas" style="border: 1px solid red">
+              <canvas id="canvas">
               </canvas>
           </div>
         </div>
@@ -111,7 +109,7 @@
 //        $("#canvas").get(0).height = $("#game-box").width());
       });
 
-      var DOCKS = 20;
+      var DOCKS = 40;
       var LAKE_SIZE = 0.75;
 
       // Hack
@@ -120,11 +118,10 @@
 
       var dockNo = function (dir)  {
         
-        if (dir < 0) {
-          alert("hu!");
-        } else {
-          dir = (dir / (Math.PI * 2)) % 1;                    
+        while (dir < 0) {
+          dir += Math.PI * 2;
         }
+          dir = (dir / (Math.PI * 2)) % 1;                    
         // dock zero is at top.
         var n = Math.floor((1 - dir) * DOCKS);
         return (n % DOCKS);
@@ -137,15 +134,18 @@
             },  
               defaults: {  
                 // Location of cursor
-                go      : true,         // If game is active
-                mouse   : null,         // cursor
-                center  : { x : 0, y : 0 },
-                pos     : { x : 0, y : 0 },
-                wake    : [],
-                dir     : 0,            // direction in radians
-                bigfoot : 0, // Math.PI / 2,  // location of bigfoot
-                size    : width,        // how big the canvas
-                step    : 0,            // just a (stepper) counter
+                go       : true,         // If game is active
+                gameover : false,        // If game is done, but 
+                mouse    : null,         // cursor
+                center   : { x : 0, y : 0 },
+                pos      : { x : 0, y : 0 },
+                wake     : [],
+                dir      : 0,            // direction in radians
+                bigfoot  : 0, // Math.PI / 2,  // location of bigfoot
+                size     : width,        // how big the canvas
+                step     : 0,            // just a (stepper) counter
+                debug    : null,        // the debugging message
+                docks    : new Array (DOCKS) // The docks, undefined = safe
             }  
         });  
 
@@ -166,6 +166,28 @@
 
       var navModel = new NavModel();
 
+      var ImageModel = Backbone.Model.extend({  
+            initialize: function(){  
+              var bigfoot = new Image();
+              var self = this;
+              bigfoot.onload = function() {
+                self.set('bigfoot',bigfoot);  // add into model once it is loaded.
+              },
+              bigfoot.src = 'png/bigfoot.png';
+
+              var boat = new Image();
+              boat.onload = function() {
+                self.set('boat',boat);  // add into model once it is loaded.
+              },
+              boat.src = 'png/boat.png';
+              // both from openclipart.org
+            },  
+            defaults: {
+            }  
+        });  
+      var imageModel = new ImageModel();
+
+
       //--------------------------------------------------------
       
       var x;
@@ -176,11 +198,18 @@
 
       var step = function () {
         var step = gameModel.get('step');
-        step++;
+        step++; // our basic tick
+
         var pos = gameModel.get('pos');  // be careful, this is the original, not a copy
         var dir = gameModel.get('dir');
         var mouse = gameModel.get('mouse');
         var wake  = gameModel.get('wake');
+        var gameover = gameModel.get('gameover');
+        var debug    = gameModel.get('debug');
+        var docks    = gameModel.get('docks');
+        var bigfoot    = gameModel.get('bigfoot');
+        var bigfoot_speed = 3;
+
 
         if (mouse != null) {
           var controlX = mouse.x - pos.x;
@@ -190,34 +219,79 @@
 //          console.log("dir: " + dir);
         }
 
+        if (gameover) { 
+          // do nothing (except animate?)
 
-        // Add the wake
-        if (step % 5 == 0) {
-          wake.push( { x: pos.x, y: pos.y, dir: dir } );
-        }
-        if (wake.length > 40) {
-          wake.shift(); // throw away the furthest one
-        }
+        } else {
+          // Add the wake
+          if (step % 5 == 0) {
+            wake.push( { x: pos.x, y: pos.y, dir: dir } );
+          }
+          if (wake.length > 40) {
+            wake.shift(); // throw away the furthest one
+          }
 
-        var bigfoot = gameModel.get('bigfoot');
-        var bigfoot_speed = 4;
 
-        bigfoot += bigfoot_speed / (width * LAKE_SIZE / 2);
+          // Now we need to work out where the boat is
+          loc = (2 * Math.PI + Math.atan2(-pos.y, pos.x)) % (2 * Math.PI);
+          var diff = (2 * Math.PI + (bigfoot - loc)) % (2 * Math.PI);
 
+
+          var bigfoot_step_speed = bigfoot_speed / (width * LAKE_SIZE / 2);
+
+          // Normalize to +/- PI
+          if (diff >= Math.PI) {
+            diff = diff - Math.PI * 2;
+          }
+
+          if (Math.abs(diff) < bigfoot_step_speed) {
+            bigfoot = loc;
+          } else if (diff < 0) { 
+            bigfoot += bigfoot_speed / (width * LAKE_SIZE / 2)
+          } else {
+            bigfoot -= bigfoot_speed / (width * LAKE_SIZE / 2);
+          }          
+
+          if (bigfoot < 0) {
+            bigfoot += 2 * Math.PI;
+          }
+          if (bigfoot >= 2 * Math.PI) {
+            bigfoot -= 2 * Math.PI;
+          }
 
 //        console.log(dockNo(bigfoot));
 
 
-        // Now, we need to compute a vector
-        var xd = Math.cos(dir);
-        var yd = Math.sin(dir);
+          // Now, we need to compute a vector
+          var xd = Math.cos(dir);
+          var yd = Math.sin(dir);
 
-        // And the updates
-//        console.log("speed: " + Math.sqrt(xd * xd + yd * yd));
-        pos.x += xd;
-        pos.y += yd;
+          pos.x += xd;
+          pos.y += yd;
+        
+          for (var i = 0;i < DOCKS; i++) {
+            docks[i] = undefined;
+            docks[dockNo(bigfoot + 0.02)] = 'bigfoot';
+            docks[dockNo(bigfoot - 0.02)] = 'bigfoot';
+          }
 
-        gameModel.set( { step: step, pos: pos, dir : dir, bigfoot: bigfoot, wake: wake });
+          // Now check to see if we are done
+          // console.log("log" + Math.sqrt(pos.x * pos.x + pos.y * pos.y) + " " + gameModel.get('size') * (LAKE_SIZE / 2));
+          if (Math.sqrt(pos.x * pos.x + pos.y * pos.y) > gameModel.get('size') * (LAKE_SIZE / 2)) {
+            gameover = true;
+            if (docks[dockNo(loc)] == 'bigfoot') {
+              alert("Lose!");
+            } else { 
+              docks[dockNo(loc)] = 'landed';
+              alert("Win");
+            }
+          }
+
+          debug = "diff: " + diff;
+        }
+
+        gameModel.set( { step: step, pos: pos, dir: dir, bigfoot: bigfoot, wake: wake, gameover: gameover,
+                         debug: debug, docks: docks });
       };
       
       // pleaseStep says, at some point *soon* I will step the world.
@@ -229,6 +303,10 @@
           },40);
         };
       };
+      
+      var magic_varX = 0;
+      var magic_varY = 0;
+
 
       $("#debugging").html("start");
       var GameView = Backbone.View.extend({  
@@ -236,7 +314,8 @@
         tagName : "div",  
         id: "game",
         events : {
-          "mousemove"  : "mousemove"
+          "mousemove"  : "mousemove",
+          "keypress"   : "keypress"
         },
         initialize : function() {  
           // code for rendering the HTML for the view  
@@ -251,8 +330,8 @@
 
 
           context.save();
-
           context.clearRect(0, 0, canvas.width, canvas.height);
+
           context.beginPath();
 
           var centerX = Math.floor(canvas.width / 2);
@@ -261,15 +340,24 @@
           var radius = Math.floor(scale * LAKE_SIZE);
           var step = gameModel.get('step');
           var bigfoot = gameModel.get('bigfoot');
+          var docks   = gameModel.get('docks');
                     
           context.translate(centerX, centerY);
 
+          // draw lake
           context.beginPath();
           context.arc(0, 0, Math.floor(radius), 0, 2 * Math.PI, false);
           context.fillStyle = '#0099ff';
           context.fill();
           context.lineWidth = 1;
           context.strokeStyle = 'black';
+          context.stroke();
+
+          // Draw border
+          context.beginPath();
+          context.arc(0, 0, Math.floor(radius + 30), 0, 2 * Math.PI,true);
+          context.lineWidth = 60;
+          context.strokeStyle = 'white';
           context.stroke();
 
           for (var i = 0;i < DOCKS; i++) {
@@ -280,17 +368,18 @@
             context.beginPath();
             context.arc(0, 0, Math.floor(radius), 1 * 2 * Math.PI / DOCKS - 0.01, 0.01, true);
             context.lineWidth = 10;
-            if (dockNo(bigfoot) == i) {
+            if (docks[i] == 'bigfoot') { 
               context.strokeStyle = '#ff0000';
+            } else if (docks[i] == 'landed') { 
+              context.strokeStyle = '#00ff00';
             } else {
-              context.strokeStyle = '#808080'; //            108020';              
+              context.strokeStyle = '#808080'; 
             }
             context.stroke();
             context.restore();
           }
 
           // Print the bigfoot
-          // Printing the boat
           context.save();
 //          console.log(bigfoot);
           context.translate(Math.cos(bigfoot) * scale * 0.85,-Math.sin(bigfoot) * scale * 0.85);
@@ -298,18 +387,15 @@
           var bf_y = -Math.sin(bigfoot) * scale * 0.75;
           var bf_x_s = old_bf_x - bf_x;
           var bf_y_s = old_bf_y - bf_y;
-          console.log("speed: " + Math.sqrt(bf_x_s * bf_x_s + bf_y_s * bf_y_s));
+//          console.log("speed: " + Math.sqrt(bf_x_s * bf_x_s + bf_y_s * bf_y_s));
           old_bf_x = bf_x;
           old_bf_y = bf_y;
 
-
-          context.beginPath();
-          context.rect(20, 10, -20, -10);
-          context.fillStyle = 'yellow';
-          context.fill();
-          context.lineWidth = 2;
-          context.strokeStyle = 'black';
-          context.stroke();
+          if (imageModel.has('bigfoot')) {
+//            wobble = (step % 10 > 5)  ? (step % 10) : (10 - step % 10);
+            wobble = 0;
+            context.drawImage(imageModel.get('bigfoot'), -22 + wobble, -26 - wobble, 45 - wobble, 55 + wobble);
+          }
           context.restore();
 
           // Now, the boat wake
@@ -334,8 +420,14 @@
 
           // Printing the boat
           context.save();
-          context.translate(gameModel.get('pos').x,gameModel.get('pos').y);
-          context.rotate(gameModel.get('dir'));
+          if (imageModel.has('boat')) {
+            context.translate(gameModel.get('pos').x,gameModel.get('pos').y);
+            context.rotate(gameModel.get('dir') + 2.13);
+            context.translate(-22 + 3 + magic_varX,-26 + 7 + magic_varY); // gameModel.get('pos').x,gameModel.get('pos').y);
+            context.drawImage(imageModel.get('boat'), 0,0); // -22, -26);
+          }
+          context.restore();
+/*
           context.beginPath();
           context.rect(-10, -5, 20, 10);
           context.fillStyle = 'yellow';
@@ -344,7 +436,7 @@
           context.strokeStyle = 'black';
           context.stroke();
           context.restore();
-
+*/
 
 
           // Now print the mouse pointer (which is abs)
@@ -361,8 +453,16 @@
             context.restore();
          }
 
+
+         // Last thing printed is debugging
+         if (gameModel.get('debug') != null) {
+           context.fillStyle = 'black';
+//           context.fillText(gameModel.get('debug'),0,0);
+           context.fillText("" + magic_varX + " " + magic_varY,0,0);
+         }
+
           // Final restore
-          context.restore();
+         context.restore();
 
 
           // Next, request a redraw in the near future (it is an animation)
@@ -372,7 +472,6 @@
 
         },
         mousemove : function (ev) {
-          $("#debugging").html("move" );
             var targetOffset = $(ev.target).offset();
             // From https://gist.github.com/pedromg/2898946
             if(typeof ev.offsetX === "undefined" || typeof ev.offsetY === "undefined") {
@@ -386,6 +485,11 @@
             gameModel.set({ mouse: { x: ev.offsetX - canvas.width/2- 1, y: ev.offsetY - canvas.height/2 - 2}});
 //            console.log(gameModel.get('mouse'));
         },
+        keypress : function (ev) {
+          alert("KEY");
+          console.log(ev);
+        },
+
         go : function () {
           
         },
@@ -405,11 +509,13 @@
           "click #restart-button":  "restart",
           "click #login-button":    "login",
           "click #edit-button":     "edit",
-          "click #home-button":     "home"
+          "click #home-button":     "home",
+          "keydown":               "keypress"
         },
         initialize : function() {  
           // code for rendering the HTML for the view  
           navModel.on('change', this.render);
+          imageModel.on('change', this.render);
           this.render();
         },
 
@@ -428,10 +534,33 @@
         restart : function () { gameModel.set('go',true); },
         login :   function () { navModel.set('active','login'); },
         edit :   function () { navModel.set('active','edit'); },
-        home :   function () { navModel.set('active','home'); }
+        home :   function () { navModel.set('active','home'); },
+        keypress: function () { alert("D"); }
       });
 
       var navView = new NavView({});
+
+      var BrowserView = Backbone.View.extend({  
+        el: $('body'),
+        events : {
+          "keypress"   : "keypress"
+        },
+        initialize : function() {  
+        },
+        keypress: function(ev) { 
+           if (ev.charCode == 122) { magic_varX--; }
+           if (ev.charCode == 120) { magic_varX++; }
+           if (ev.charCode == 99) { magic_varY--; }
+           if (ev.charCode == 118) { magic_varY++; }
+            console.log(ev);
+        }
+            
+      });
+
+        
+      var browserView = new BrowserView();
+        
+        // $('body').keypress(function (){ alert("XX")});
 
     });
     
