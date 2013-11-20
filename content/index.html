@@ -66,7 +66,6 @@
                 <ul>
                   <li>Your objective is to row off the lake, <u>without</u> Bigfoot catching you.</li>
                   <li>You can control your direction.</li>
-                  <li>If you land on a green segment,you win.</li>
                   <li>If you land on a red segment, you lose.</li>
                   <li>You have one minute. </li>
                 </ul>
@@ -135,7 +134,7 @@
               defaults: {  
                 // Location of cursor
                 go       : true,         // If game is active
-                gameover : false,        // If game is done, but 
+                status   : 'playing',    // If game is done, but 
                 mouse    : null,         // cursor
                 center   : { x : 0, y : 0 },
                 pos      : { x : 0, y : 0 },
@@ -204,7 +203,7 @@
         var dir = gameModel.get('dir');
         var mouse = gameModel.get('mouse');
         var wake  = gameModel.get('wake');
-        var gameover = gameModel.get('gameover');
+        var status = gameModel.get('status');
         var debug    = gameModel.get('debug');
         var docks    = gameModel.get('docks');
         var bigfoot    = gameModel.get('bigfoot');
@@ -219,10 +218,7 @@
 //          console.log("dir: " + dir);
         }
 
-        if (gameover) { 
-          // do nothing (except animate?)
-
-        } else {
+        if (status == 'playing') { 
           // Add the wake
           if (step % 5 == 0) {
             wake.push( { x: pos.x, y: pos.y, dir: dir } );
@@ -278,19 +274,17 @@
           // Now check to see if we are done
           // console.log("log" + Math.sqrt(pos.x * pos.x + pos.y * pos.y) + " " + gameModel.get('size') * (LAKE_SIZE / 2));
           if (Math.sqrt(pos.x * pos.x + pos.y * pos.y) > gameModel.get('size') * (LAKE_SIZE / 2)) {
-            gameover = true;
             if (docks[dockNo(loc)] == 'bigfoot') {
-              alert("Lose!");
+              status = 'lost';
             } else { 
               docks[dockNo(loc)] = 'landed';
-              alert("Win");
+              status = 'won';
             }
           }
-
           debug = "diff: " + diff;
         }
 
-        gameModel.set( { step: step, pos: pos, dir: dir, bigfoot: bigfoot, wake: wake, gameover: gameover,
+        gameModel.set( { step: step, pos: pos, dir: dir, bigfoot: bigfoot, wake: wake, status: status,
                          debug: debug, docks: docks });
       };
       
@@ -307,8 +301,6 @@
       var magic_varX = 0;
       var magic_varY = 0;
 
-
-      $("#debugging").html("start");
       var GameView = Backbone.View.extend({  
         el: $('#game-box'),
         tagName : "div",  
@@ -453,9 +445,25 @@
             context.restore();
          }
 
+         
+         if (gameModel.get('status') != 'playing') {
+           context.save();
+           context.strokeStyle = 'black';
+           context.lineWidth = 5;
+           context.font = "80px sans-serif";
+           if (gameModel.get('status') == 'won') {
+             txt = "You Escape!";
+           } else {
+             txt = "Game Over!";
+           }
+           txtM = context.measureText(txt);
+           context.strokeText(txt,-txtM.width / 2, 0);
+           context.restore();
+         }
+
 
          // Last thing printed is debugging
-         if (gameModel.get('debug') != null) {
+         if (gameModel.get('debug') != null && false) {
            context.fillStyle = 'black';
 //           context.fillText(gameModel.get('debug'),0,0);
            context.fillText("" + magic_varX + " " + magic_varY,0,0);
@@ -464,9 +472,8 @@
           // Final restore
          context.restore();
 
-
           // Next, request a redraw in the near future (it is an animation)
-          if (gameModel.get('go')) {
+          if (gameModel.get('go')&& gameModel.get('status') == 'playing') {
             pleaseStep();
           }
 
