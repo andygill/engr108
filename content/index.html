@@ -130,6 +130,8 @@
       //--------------------------------------------------------
       var Game = Backbone.Model.extend({  
             initialize: function(){  
+              this.origDefaults = new Object();
+              $.extend(true,this.origDefaults,this.defaults);
             },  
               defaults: {  
                 // Location of cursor
@@ -143,9 +145,18 @@
                 bigfoot  : 0, // Math.PI / 2,  // location of bigfoot
                 size     : width,        // how big the canvas
                 step     : 0,            // just a (stepper) counter
+                clock    : 60,          // How long to go
+                startClock : null,      // What time did you start
+                level    : 1,           // What level are we
                 debug    : null,        // the debugging message
                 docks    : new Array (DOCKS) // The docks, undefined = safe
-            }  
+            }, 
+            newLevel : function(level) {
+              var copyOfDefaults = new Object();
+              $.extend(true,copyOfDefaults,this.origDefaults);
+              copyOfDefaults.level = level;   // hack; figure out how to do this better
+              gameModel.set(copyOfDefaults);
+            }
         });  
 
       var gameModel = new Game({});
@@ -206,9 +217,11 @@
         var status = gameModel.get('status');
         var debug    = gameModel.get('debug');
         var docks    = gameModel.get('docks');
-        var bigfoot    = gameModel.get('bigfoot');
-        var bigfoot_speed = 3;
-
+        var bigfoot   = gameModel.get('bigfoot');
+        var clock     = gameModel.get('clock');
+        var startClock = gameModel.get('startClock');
+        var level     = gameModel.get('level');
+        var bigfoot_speed = 2.75 + (level * 0.25);
 
         if (mouse != null) {
           var controlX = mouse.x - pos.x;
@@ -219,6 +232,15 @@
         }
 
         if (status == 'playing') { 
+          // Clock
+          if (startClock == null) {
+            // Start time
+            startClock = new Date();
+          }
+          now = new Date();
+
+          clock = 60 - (now.getTime() - startClock.getTime()) / 1000;
+
           // Add the wake
           if (step % 5 == 0) {
             wake.push( { x: pos.x, y: pos.y, dir: dir } );
@@ -273,6 +295,10 @@
 
           // Now check to see if we are done
           // console.log("log" + Math.sqrt(pos.x * pos.x + pos.y * pos.y) + " " + gameModel.get('size') * (LAKE_SIZE / 2));
+          if (clock < 0) {
+              status = 'lost';            
+          }
+
           if (Math.sqrt(pos.x * pos.x + pos.y * pos.y) > gameModel.get('size') * (LAKE_SIZE / 2)) {
             if (docks[dockNo(loc)] == 'bigfoot') {
               status = 'lost';
@@ -284,7 +310,9 @@
           debug = "diff: " + diff;
         }
 
-        gameModel.set( { step: step, pos: pos, dir: dir, bigfoot: bigfoot, wake: wake, status: status,
+        gameModel.set( { step: step, pos: pos, dir: dir, 
+                         bigfoot: bigfoot, wake: wake, status: status,
+                         clock: clock, startClock: startClock,
                          debug: debug, docks: docks });
       };
       
@@ -469,11 +497,29 @@
            context.fillText("" + magic_varX + " " + magic_varY,0,0);
          }
 
-          // Final restore
+          // Final (game) restore
+         context.restore();
+
+         // Next, the time remaining (in old plain)
+         
+         context.save();
+         context.fillStyle = 'red';
+         context.font = "60px sans-serif";
+         txt = gameModel.get('clock').toFixed(1); 
+         if (gameModel.get('clock') <= 0) {
+           txt = "Time up!";
+         }
+         txtM = context.measureText(txt);
+         context.fillText(txt, 0, 60);
+
+         context.fillStyle = 'blue';
+         txt = "Level " + gameModel.get('level');
+         txtM = context.measureText(txt);
+         context.fillText(txt, canvas.width  - txtM.width, 60);
          context.restore();
 
           // Next, request a redraw in the near future (it is an animation)
-          if (gameModel.get('go')&& gameModel.get('status') == 'playing') {
+          if (gameModel.get('go') && gameModel.get('status') != 'lost') {
             pleaseStep();
           }
 
@@ -555,7 +601,7 @@
         initialize : function() {  
         },
         keypress: function(ev) { 
-           if (ev.charCode == 122) { magic_varX--; }
+           if (ev.charCode == 122) { gameModel.newLevel(10); }
            if (ev.charCode == 120) { magic_varX++; }
            if (ev.charCode == 99) { magic_varY--; }
            if (ev.charCode == 118) { magic_varY++; }
