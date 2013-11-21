@@ -33,17 +33,89 @@
           <a class="navbar-brand" href="#"><b>Escape from Crater Lake</b></a>
         </div>
         <div class="navbar-collapse collapse">
-          <ul class="nav navbar-nav">
-          </ul>
-          <ul class="nav navbar-nav navbar-right">
-            <li><a id="restart-button"><span class="glyphicon glyphicon-repeat"></span>&nbsp;Restart</a></li>
-            <li><a id="login-button">Login</a></li>
-            <li class=""><a id="edit-button">Edit Game</a></li>
-            <li class="active"><a id="home-button">Introduction</a></li>
+          <ul class="nav nav-pills navbar-nav navbar-right">
+            <li><a id="restart-button"><span class="glyphicon glyphicon-repeat"></span>&nbsp;Restart Game</a></li>
+            <li><a data-toggle="modal" href="#help"><span class="glyphicon glyphicon-phone-alt"></span>&nbsp;Help!</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content help">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="myModalLabel">Help for Escaping from Crater Lake</h4>
+          </div>
+          <div class="modal-body">
+            <H3>Instructions</H3>
+            <p>Welcome to Escape from Crater Lake!</p>
+            <ul>
+              <li>Your objective is to row off the lake, <u>without</u> Bigfoot catching you.</li>
+              <li>You can control your direction.</li>
+              <li>If you land on a red segment, you lose.</li>
+              <li>You have one minute. </li>
+              <li>If you succeed, then Bigfoot gets faster.</li>
+            </ul>
+            <p>Good luck!</p>
+
+            <h3>Programming the Boat</h3>
+
+            <p>Assign <code>pos</code> with the value of the direction you want to go, in radians.</p>
+            <table class="table" width="50%">
+              <tr><td>East<td><td>North<td><td>West<td><td>South<td></tr>
+              <tr><td>PI<td><td>PI/2<td><td>0<td><td>-PI/2<td></tr>
+            </table>
+
+            <p>
+            There are a number of built in variables and functions that you can used.
+            </p>
+            
+            <h4>Variables</h4>
+          
+            <p>At the start of your program, the <b>old</b> value of <code>pos</code> is already set.
+            </p>
+
+            <p><code>x</code> and <code>y</code> are the location of your boat on the screen, 
+              with <code>0,0</code> being the center of the lake.
+            </p>
+
+            <p><code>PI</code> is predefined as the value of &pi;.
+          
+            <p><code>mouseX</code> and <code>mouseY</code> are the location of the mouse 
+              on the screen, again with <code>0,0</code> being the center of the lake.
+            </p>
+
+            <p><code>keyXisPressed</code> and <code>keyZisPressed</code> are set
+              if 'X' or 'Z' are pressed, respectively.
+            </p>
+
+            <p><code>monster</code> is the location of the monster, in radians.
+            </p>
+
+
+            <h4>Functions</h4>
+            
+            <p>The trigonometry <code>sin( ... )</code>, <code>cos( ... )</code>, <code>atan2( ... , ... )</code> are available for you to use.</p>
+
+            <h3>Sample programs</h3>
+            
+            <h4>Follow the mouse</h4>
+            <pre>pos = 3.1415;</pre>
+
+            <h4>Beeline</h4>
+            <pre>pos = PI;</pre>
+
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+
+
+
 
       <div class="container">
         <div class="col-md-8">
@@ -55,34 +127,8 @@
         </div>
         <div class="col-md-4">
 
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title">Escape from Crater Lake</h3>
-            </div>
-            <div class="panel-body">
-
-                <p>Welcome to Escape from Crater Lake!</p>
-                <ul>
-                  <li>Your objective is to row off the lake, <u>without</u> Bigfoot catching you.</li>
-                  <li>You can control your direction.</li>
-                  <li>If you land on a red segment, you lose.</li>
-                  <li>You have one minute. </li>
-                </ul>
-                <p>Good luck!</p>
-
-                <hr>
-
-                <p>If you want to edit the game, then please log in</a>
-                <form class="" method="POST">
-                  <div class="form-group">
-                    <input type="text" placeholder="Email" name="email" class="form-control">
-                  </div>
-                  <button type="submit" class="btn btn-primary">Sign in</button>
-                </form>
-
-
-            </div>
-          </div>
+          <textarea class="form-control" rows="3" id="editor">pos = 1;
+          </textarea>
 
       </div>
     </div>
@@ -137,7 +183,7 @@
                 go       : true,         // If game is active
                 status   : 'playing',    // If game is done, but 
                 statusCount : 0,            // ticks since status update
-                mouse    : null,         // cursor
+                mouse    : { x : 500, y : 0 }, // cursor
                 center   : { x : 0, y : 0 },
                 pos      : { x : 0, y : 0 },
                 wake     : [],
@@ -197,6 +243,31 @@
         });  
       var imageModel = new ImageModel();
 
+      var EditorModel = Backbone.Model.extend({  
+            initialize: function() {
+            },  
+            defaults: { text: "", argsIn : {}, argsOut : {} }
+      });
+
+      var runEditorCode = function(input,args) {
+        var res = new Object();
+        for(var k in args) { res[k] = args[k]; }
+        res.pos = 0;
+        // The built ins
+        res.PI = Math.PI;
+        res.cos = Math.cos;
+        res.sin = Math.sin;
+        res.atan2 = Math.atan2;
+        // Run, please.
+        try { with (res) { eval(input); } } catch (ex) { res = ex.message; }
+
+        // Update the model
+        editorModel.set({ argsIn : args, argsOut : res });
+
+        return res;
+      };
+
+      window.run = runEditorCode;
 
       //--------------------------------------------------------
       
@@ -279,6 +350,15 @@
 
 //        console.log(dockNo(bigfoot));
 
+         // Now, the big HACK, the eval
+
+          var text = editorModel.get('text');
+          var args = { dir: dir };
+          var argsOut = runEditorCode(text,args);
+
+          if (argsOut.dir != undefined && typeof(argsOut.dir) == "number") {
+            dir = argsOut.dir;
+          }
 
           // Now, we need to compute a vector
           var xd = Math.cos(dir);
@@ -433,7 +513,7 @@
 //            i = wake.length - 1;
             context.save();
             context.globalAlpha = 0.7 - 0.7 * (wake.length - i) / wake.length;
-            context.translate(wake[i].x,wake[i].y);
+            context.translate(wake[i].x,-wake[i].y);
             context.lineWidth = 1;
             context.strokeStyle = '#0000ff';
             context.beginPath();
@@ -450,8 +530,8 @@
           // Printing the boat
           context.save();
           if (imageModel.has('boat')) {
-            context.translate(gameModel.get('pos').x,gameModel.get('pos').y);
-            context.rotate(gameModel.get('dir') + 2.13);
+            context.translate(gameModel.get('pos').x,-gameModel.get('pos').y);
+            context.rotate(-gameModel.get('dir') + 2.13);
             context.translate(-22 + 3 + magic_varX,-26 + 7 + magic_varY); // gameModel.get('pos').x,gameModel.get('pos').y);
             context.drawImage(imageModel.get('boat'), 0,0); // -22, -26);
           }
@@ -584,8 +664,8 @@
         },
 
         render: function() {
-          $(".nav li").removeClass("active");
-          $(".nav #" + navModel.get('active') + "-button").parent().addClass("active");
+//          $(".nav li").removeClass("active");
+//          $(".nav #" + navModel.get('active') + "-button").parent().addClass("active");
         },
 /*
      <ul class="nav navbar-nav navbar-right">
@@ -606,7 +686,8 @@
       var BrowserView = Backbone.View.extend({  
         el: $('body'),
         events : {
-          "keypress"   : "keypress"
+          "keypress"   : "keypress",
+          "keydown" : "keypress"
         },
         initialize : function() {  
         },
@@ -615,16 +696,32 @@
            if (ev.charCode == 120) { magic_varX++; }
            if (ev.charCode == 99) { magic_varY--; }
            if (ev.charCode == 118) { magic_varY++; }
-            console.log(ev);
         }
             
       });
-
-        
       var browserView = new BrowserView();
         
         // $('body').keypress(function (){ alert("XX")});
 
+
+      editorModel = new EditorModel();
+
+      var EditorView = Backbone.View.extend({  
+        el: $("#editor"),
+        events : { "keyup" : "keypress" },
+        initialize : function () {
+          editorModel.on('change', this.render);
+          this.render();
+        },
+        render: function () {
+          console.log(editorModel.get('text'));
+        },
+        keypress: function() {
+          editorModel.set('text',$("#editor").val());
+        }
+      });
+
+      editorView = new EditorView({});
     });
     
     </script>
