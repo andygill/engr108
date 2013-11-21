@@ -34,10 +34,9 @@
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li class=""><a id="pause-button">Pause</a></li>
-            <li class=""><a id="restart-button">Restart</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
+            <li><a id="restart-button"><span class="glyphicon glyphicon-repeat"></span>&nbsp;Restart</a></li>
             <li><a id="login-button">Login</a></li>
             <li class=""><a id="edit-button">Edit Game</a></li>
             <li class="active"><a id="home-button">Introduction</a></li>
@@ -137,6 +136,7 @@
                 // Location of cursor
                 go       : true,         // If game is active
                 status   : 'playing',    // If game is done, but 
+                statusCount : 0,            // ticks since status update
                 mouse    : null,         // cursor
                 center   : { x : 0, y : 0 },
                 pos      : { x : 0, y : 0 },
@@ -208,7 +208,9 @@
 
       var step = function () {
         var step = gameModel.get('step');
+        var statusCount = gameModel.get('statusCount');
         step++; // our basic tick
+        statusCount++;
 
         var pos = gameModel.get('pos');  // be careful, this is the original, not a copy
         var dir = gameModel.get('dir');
@@ -248,12 +250,10 @@
           if (wake.length > 40) {
             wake.shift(); // throw away the furthest one
           }
-
-
+          
           // Now we need to work out where the boat is
           loc = (2 * Math.PI + Math.atan2(-pos.y, pos.x)) % (2 * Math.PI);
           var diff = (2 * Math.PI + (bigfoot - loc)) % (2 * Math.PI);
-
 
           var bigfoot_step_speed = bigfoot_speed / (width * LAKE_SIZE / 2);
 
@@ -297,23 +297,32 @@
           // console.log("log" + Math.sqrt(pos.x * pos.x + pos.y * pos.y) + " " + gameModel.get('size') * (LAKE_SIZE / 2));
           if (clock < 0) {
               status = 'lost';            
+              statusCount = 0;
           }
 
-          if (Math.sqrt(pos.x * pos.x + pos.y * pos.y) > gameModel.get('size') * (LAKE_SIZE / 2)) {
+          if (Math.sqrt(pos.x * pos.x + pos.y * pos.y) > gameModel.get('size') * 0.95 * (LAKE_SIZE / 2)) {
             if (docks[dockNo(loc)] == 'bigfoot') {
               status = 'lost';
             } else { 
               docks[dockNo(loc)] = 'landed';
               status = 'won';
             }
+            statusCount = 0;
           }
           debug = "diff: " + diff;
+        } else if (status == 'lost' && statusCount > 40) {
+          status = 'stopped';
+        } else if (status == 'won' && statusCount > 40) {
+          gameModel.newLevel(level+1);
+          return; // abort the stepper, please
         }
 
         gameModel.set( { step: step, pos: pos, dir: dir, 
                          bigfoot: bigfoot, wake: wake, status: status,
                          clock: clock, startClock: startClock,
-                         debug: debug, docks: docks });
+                         debug: debug, docks: docks,
+                         statusCount: statusCount 
+                        });
       };
       
       // pleaseStep says, at some point *soon* I will step the world.
@@ -474,21 +483,24 @@
          }
 
          
-         if (gameModel.get('status') != 'playing') {
+         if (gameModel.get('status') == 'won' || gameModel.get('status') == 'lost') {
            context.save();
            context.strokeStyle = 'black';
            context.lineWidth = 5;
            context.font = "80px sans-serif";
            if (gameModel.get('status') == 'won') {
              txt = "You Escape!";
-           } else {
+           } else if (gameModel.get('status') == 'lost') {
              txt = "Game Over!";
            }
            txtM = context.measureText(txt);
-           context.strokeText(txt,-txtM.width / 2, 0);
+           var off = 0;
+           if (gameModel.get('statusCount') < 20) {
+             off = (20 - gameModel.get('statusCount')) * 20;
+           }
+           context.strokeText(txt,off-txtM.width / 2, 0);
            context.restore();
          }
-
 
          // Last thing printed is debugging
          if (gameModel.get('debug') != null && false) {
@@ -519,7 +531,7 @@
          context.restore();
 
           // Next, request a redraw in the near future (it is an animation)
-          if (gameModel.get('go') && gameModel.get('status') != 'lost') {
+          if (gameModel.get('go') && gameModel.get('status') != 'stopped') {
             pleaseStep();
           }
 
@@ -558,7 +570,6 @@
       var NavView = Backbone.View.extend({  
         el: $('.nav'),
         events: {
-          "click #pause-button":    "pause",
           "click #restart-button":  "restart",
           "click #login-button":    "login",
           "click #edit-button":     "edit",
@@ -583,8 +594,7 @@
             <li class="active"><a id="home-button">Introduction</a></li>
           </ul>
   */
-        pause :   function () { gameModel.set('go',false); },
-        restart : function () { gameModel.set('go',true); },
+        restart : function () { gameModel.newLevel(1) },
         login :   function () { navModel.set('active','login'); },
         edit :   function () { navModel.set('active','edit'); },
         home :   function () { navModel.set('active','home'); },
