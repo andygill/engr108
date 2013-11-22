@@ -103,9 +103,11 @@
             <h3>Sample programs</h3>
             
             <h4>Follow the mouse</h4>
-            <pre>pos = 3.1415;</pre>
+            <pre>controlX = mouseX - x;
+controlY = mouseY - y;
+dir = Math.atan2(controlY,controlX);</pre>
 
-            <h4>Beeline</h4>
+            <h4>Beeline the other way</h4>
             <pre>pos = PI;</pre>
 
           </div>
@@ -127,8 +129,16 @@
         </div>
         <div class="col-md-4">
 
-          <textarea class="form-control" rows="3" id="editor">pos = 1;
+
+          <table class="table table-striped table-bordered table-condensed" id="vars-before">
+          </table>
+          
+          <textarea class="form-control" rows="3" id="editor">dir = 0;
           </textarea>
+          <BR/>
+
+          <table class="table table-striped table-bordered table-condensed" id="vars-after">
+          </table>
 
       </div>
     </div>
@@ -166,8 +176,8 @@
           dir += Math.PI * 2;
         }
           dir = (dir / (Math.PI * 2)) % 1;                    
-        // dock zero is at top.
-        var n = Math.floor((1 - dir) * DOCKS);
+        // dock zero is due East.
+        var n = Math.floor(dir * DOCKS);
         return (n % DOCKS);
       };
 
@@ -250,24 +260,58 @@
       });
 
       var runEditorCode = function(input,args) {
+        // Built ins
+        args.PI = Math.PI;
+        args.cos = Math.cos;
+        args.sin = Math.sin;
+        args.atan2 = Math.atan2;
+
+        // Clone
         var res = new Object();
-        for(var k in args) { res[k] = args[k]; }
-        res.pos = 0;
-        // The built ins
-        res.PI = Math.PI;
-        res.cos = Math.cos;
-        res.sin = Math.sin;
-        res.atan2 = Math.atan2;
+        for(var k in extras) {
+            res[extras[k]] = null;
+        }
+        for(var k in args) { 
+            res[k] = args[k]; 
+        }
+
+        var extras = input.match(/\S+(?=\s*=)/g);
+
+        var fin = {};
         // Run, please.
-        try { with (res) { eval(input); } } catch (ex) { res = ex.message; }
+        try { 
+          with (res) { eval(input); } 
+          for(var k in extras) {
+              fin[extras[k]] = res[extras[k]];
+            }
+        } catch (ex) { fin = ex.message; 
+        }
 
         // Update the model
-        editorModel.set({ argsIn : args, argsOut : res });
+        editorModel.set({ argsIn : args, argsOut : fin });
+
+/*
+"  va = 1+ 2;b = 2;".match(/\S+\s*=/g)
+
+ */
 
         return res;
       };
 
-      window.run = runEditorCode;
+      window.updateTable = function(nm,vars) {
+        if (typeof(vars) == "string") {
+          $(nm).html("<tr><th><pre>" + vars + "</pre></th></tr>");
+        } else {
+          $(nm).html("<tr><th>variable</th><th>value</th></tr>");
+          for(var k in vars) {
+            var v;
+            if (typeof(vars[k]) == "number") { 
+              v = vars[k].toFixed(2);
+              $(nm).append("<tr><td>" + k + "</td><td>" + v + "</td></tr>");
+            }
+          }
+        }
+      }
 
       //--------------------------------------------------------
       
@@ -296,6 +340,7 @@
         var level     = gameModel.get('level');
         var bigfoot_speed = 2.75 + (level * 0.25);
 
+/*
         if (mouse != null) {
           var controlX = mouse.x - pos.x;
           var controlY = mouse.y - pos.y;
@@ -303,6 +348,7 @@
           dir = Math.atan2(controlY,controlX);
 //          console.log("dir: " + dir);
         }
+*/
 
         if (status == 'playing') { 
           // Clock
@@ -323,7 +369,7 @@
           }
           
           // Now we need to work out where the boat is
-          loc = (2 * Math.PI + Math.atan2(-pos.y, pos.x)) % (2 * Math.PI);
+          loc = (2 * Math.PI + Math.atan2(pos.y, pos.x)) % (2 * Math.PI);
           var diff = (2 * Math.PI + (bigfoot - loc)) % (2 * Math.PI);
 
           var bigfoot_step_speed = bigfoot_speed / (width * LAKE_SIZE / 2);
@@ -353,12 +399,18 @@
          // Now, the big HACK, the eval
 
           var text = editorModel.get('text');
-          var args = { dir: dir };
+          var myDir = dir;
+          var args = { dir: dir, x : pos.x, y : pos.y,
+                       step: step, level : level, 
+                       mouseX : mouse.x, mouseY : mouse.y,
+                       monster : bigfoot };
           var argsOut = runEditorCode(text,args);
 
           if (argsOut.dir != undefined && typeof(argsOut.dir) == "number") {
             dir = argsOut.dir;
           }
+//          console.log("before: " + args.dir 
+
 
           // Now, we need to compute a vector
           var xd = Math.cos(dir);
@@ -473,7 +525,7 @@
             var start = i * 2 * Math.PI / DOCKS + 0.01;
             var end   = (i + 1) * 2 * Math.PI / DOCKS - 0.01;
             context.save();
-            context.rotate(i * 2 * Math.PI / DOCKS);
+            context.rotate(- ((i + 1) * 2 * Math.PI / DOCKS));
             context.beginPath();
             context.arc(0, 0, Math.floor(radius), 1 * 2 * Math.PI / DOCKS - 0.01, 0.01, true);
             context.lineWidth = 10;
@@ -554,7 +606,7 @@
           if (mouse != null) {
             context.save();
             context.globalAlpha = 0.5;
-            context.translate(mouse.x,mouse.y);
+            context.translate(mouse.x,-mouse.y);
             context.beginPath();
             context.arc(0, 0, 30, 0, 2 * Math.PI, false);
             context.fillStyle = 'green';
@@ -627,7 +679,7 @@
             // Now normalize to center of screen
             var canvas = $("#canvas").get(0);
 
-            gameModel.set({ mouse: { x: ev.offsetX - canvas.width/2- 1, y: ev.offsetY - canvas.height/2 - 2}});
+            gameModel.set({ mouse: { x: ev.offsetX - canvas.width/2- 1, y: - (ev.offsetY - canvas.height/2 - 2)}});
 //            console.log(gameModel.get('mouse'));
         },
         keypress : function (ev) {
@@ -711,10 +763,12 @@
         events : { "keyup" : "keypress" },
         initialize : function () {
           editorModel.on('change', this.render);
+          editorModel.set('text',$("#editor").val());
           this.render();
         },
         render: function () {
-          console.log(editorModel.get('text'));
+          updateTable("#vars-before",editorModel.get('argsIn'));
+          updateTable("#vars-after",editorModel.get('argsOut'));
         },
         keypress: function() {
           editorModel.set('text',$("#editor").val());
