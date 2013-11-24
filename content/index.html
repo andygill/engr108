@@ -300,7 +300,11 @@ dir = atan2(controlY,controlX);</pre>
           for(var k in vars) {
             var v;
             if (typeof(vars[k]) == "number") { 
-              v = vars[k].toFixed(2);
+              if (vars[k] % 1 == 0) { 
+                v = vars[k].toString();
+              } else {
+                v = vars[k].toFixed(2);
+              }
               $(nm).append("<tr><td>" + k + "</td><td>" + v + "</td></tr>");
             }
           }
