@@ -256,14 +256,15 @@ dir = atan2(controlY,controlX);</pre>
       });
 
       var runEditorCode = function(input,args) {
-        // Built ins
-        args.PI = Math.PI;
-        args.cos = Math.cos;
-        args.sin = Math.sin;
-        args.atan2 = Math.atan2;
 
         // Clone
         var res = new Object();
+        // Built ins
+        res.PI = Math.PI;
+        res.cos = Math.cos;
+        res.sin = Math.sin;
+        res.atan2 = Math.atan2;
+
         for(var k in extras) {
             res[extras[k]] = null;
         }
@@ -286,13 +287,10 @@ dir = atan2(controlY,controlX);</pre>
         // Update the model
         editorModel.set({ argsIn : args, argsOut : fin });
 
-/*
-"  va = 1+ 2;b = 2;".match(/\S+\s*=/g)
-
- */
-
         return res;
       };
+
+
 
       window.updateTable = function(nm,vars) {
         if (typeof(vars) == "string") {
@@ -767,7 +765,9 @@ dir = atan2(controlY,controlX);</pre>
           updateTable("#vars-after",editorModel.get('argsOut'));
         },
         keypress: function() {
-          editorModel.set('text',$("#editor").val());
+          var text = $("#editor").val();
+          runEditorCode(text,editorModel.get('argsIn'));
+          editorModel.set('text',text);
         }
       });
 
