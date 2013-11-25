@@ -270,7 +270,7 @@
         res.sin = Math.sin;
         res.atan2 = Math.atan2;
 
-        var extras = input.match(/[A-Za-z][A-Za-z0-9]*(?=\s*=)/g);
+        var extras = input.match(/[A-Za-z][A-Za-z0-9]*(?=\s*=(?!=))/g);
 
         for(var k in extras) {
             res[extras[k]] = null;
