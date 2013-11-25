@@ -61,13 +61,9 @@
             </ul>
             <p>Good luck!</p>
 
-            <h3>Programming the Boat</h3>
+            <h3>Programming the Raft</h3>
 
-            <p>Assign <code>pos</code> with the value of the direction you want to go, in radians.</p>
-            <table class="table" width="50%">
-              <tr><td>East<td><td>North<td><td>West<td><td>South<td></tr>
-              <tr><td>PI<td><td>PI/2<td><td>0<td><td>-PI/2<td></tr>
-            </table>
+            <p>Assign <code>dir</code> with the value of the direction you want to go, in radians.</p>
 
             <p>
             There are a number of built in variables and functions that you can used.
@@ -75,18 +71,25 @@
             
             <h4>Variables</h4>
           
-            <p>At the start of your program, the <b>old</b> value of <code>pos</code> is already set.
+            <p>At the start of your program, the <b>old</b> value of <code>dir</code> is already set.
+              This means if you do not assign <code>dir</code>, then the raft continues in the same direction as before.
             </p>
 
             <p><code>x</code> and <code>y</code> are the location of your boat on the screen, 
               with <code>0,0</code> being the center of the lake.
             </p>
 
-            <p><code>PI</code> is predefined as the value of &pi;.
-
-            <p><code>keyXisPressed</code> and <code>keyZisPressed</code> are set
-              if 'X' or 'Z' are pressed, respectively.
+            <p><code>step</code> is the number of steps taken in the level so far, starting at 1.
             </p>
+
+            <p><code>level</code> is the level number.
+            </p>
+
+            <p><code>mouseX</code> and <code>mouseY</code> are the location of the mouse pointer,
+              with <code>0,0</code> being the center of the lake.
+            </p>
+
+          <p><code>PI</code> is predefined as the value of &pi;.
 
             <p><code>monster</code> is the location of the monster, in radians.
             </p>
@@ -95,16 +98,6 @@
             <h4>Functions</h4>
             
             <p>The trigonometry <code>sin( ... )</code>, <code>cos( ... )</code>, <code>atan2( ... , ... )</code> are available for you to use.</p>
-
-            <h3>Sample programs</h3>
-            
-            <h4>Follow the mouse</h4>
-            <pre>controlX = mouseX - x;
-controlY = mouseY - y;
-dir = atan2(controlY,controlX);</pre>
-
-            <h4>Beeline the other way</h4>
-            <pre>pos = PI;</pre>
 
           </div>
         </div><!-- /.modal-content -->
@@ -165,6 +158,18 @@ dir = atan2(controlY,controlX);</pre>
       // Hack
       old_bf_x = 0;
       old_bf_y = 0;
+
+      // normalize to radians [-PI .. +PI)
+      var radians = function (num) {
+        num = num % (Math.PI * 2);
+        if (num > Math.PI) {
+          num = num - Math.PI * 2;
+        } else if (num <= -Math.PI) {
+          num = num + Math.PI * 2;
+        }
+        return num;
+      }
+      window.radians = radians;
 
       var dockNo = function (dir)  {
         
@@ -265,6 +270,8 @@ dir = atan2(controlY,controlX);</pre>
         res.sin = Math.sin;
         res.atan2 = Math.atan2;
 
+        var extras = input.match(/[A-Za-z][A-Za-z0-9]*(?=\s*=)/g);
+
         for(var k in extras) {
             res[extras[k]] = null;
         }
@@ -272,7 +279,6 @@ dir = atan2(controlY,controlX);</pre>
             res[k] = args[k]; 
         }
 
-        var extras = input.match(/\S+(?=\s*=)/g);
 
         var fin = {};
         // Run, please.
@@ -367,8 +373,8 @@ dir = atan2(controlY,controlX);</pre>
           }
           
           // Now we need to work out where the boat is
-          loc = (2 * Math.PI + Math.atan2(pos.y, pos.x)) % (2 * Math.PI);
-          var diff = (2 * Math.PI + (bigfoot - loc)) % (2 * Math.PI);
+          var loc = Math.atan2(pos.y, pos.x);
+          var diff = radians(bigfoot - loc);
 
           var bigfoot_step_speed = bigfoot_speed / (width * LAKE_SIZE / 2);
 
@@ -391,6 +397,7 @@ dir = atan2(controlY,controlX);</pre>
           if (bigfoot >= 2 * Math.PI) {
             bigfoot -= 2 * Math.PI;
           }
+          bigfoot = radians(bigfoot);
 
 //        console.log(dockNo(bigfoot));
 
@@ -405,7 +412,7 @@ dir = atan2(controlY,controlX);</pre>
           var argsOut = runEditorCode(text,args);
 
           if (argsOut.dir != undefined && typeof(argsOut.dir) == "number") {
-            dir = argsOut.dir;
+            dir = radians(argsOut.dir);
           }
 //          console.log("before: " + args.dir 
 
@@ -567,11 +574,11 @@ dir = atan2(controlY,controlX);</pre>
             context.lineWidth = 1;
             context.strokeStyle = '#0000ff';
             context.beginPath();
-            context.arc(0, 0, (wake.length - i) + ((step % 5) / 5), wake[i].dir + Math.PI/4, wake[i].dir + Math.PI/1.2, false);
+            context.arc(0, 0, (wake.length - i) + ((step % 5) / 5), -wake[i].dir + Math.PI/4, -wake[i].dir + Math.PI/1.2, false);
             context.stroke();
 
             context.beginPath();
-            context.arc(0, 0, (wake.length - i) + ((step % 5) / 5), wake[i].dir - Math.PI/4, wake[i].dir - Math.PI/1.2, true);
+            context.arc(0, 0, (wake.length - i) + ((step % 5) / 5), -wake[i].dir - Math.PI/4, -wake[i].dir - Math.PI/1.2, true);
             context.stroke();
             context.restore();
           }
@@ -701,10 +708,6 @@ dir = atan2(controlY,controlX);</pre>
         el: $('.nav'),
         events: {
           "click #restart-button":  "restart",
-          "click #login-button":    "login",
-          "click #edit-button":     "edit",
-          "click #home-button":     "home",
-          "keydown":               "keypress"
         },
         initialize : function() {  
           // code for rendering the HTML for the view  
@@ -714,59 +717,36 @@ dir = atan2(controlY,controlX);</pre>
         },
 
         render: function() {
-//          $(".nav li").removeClass("active");
-//          $(".nav #" + navModel.get('active') + "-button").parent().addClass("active");
         },
-/*
-     <ul class="nav navbar-nav navbar-right">
-            <li><a id="login-button">Login</a></li>
-            <li class=""><a id="edit-button">Edit Game</a></li>
-            <li class="active"><a id="home-button">Introduction</a></li>
-          </ul>
-  */
+
         restart : function () { gameModel.newLevel(1) },
-        login :   function () { navModel.set('active','login'); },
-        edit :   function () { navModel.set('active','edit'); },
-        home :   function () { navModel.set('active','home'); },
-        keypress: function () { alert("D"); }
       });
 
       var navView = new NavView({});
 
-      var BrowserView = Backbone.View.extend({  
-        el: $('body'),
-        events : {
-          "keypress"   : "keypress",
-          "keydown" : "keypress"
-        },
-        initialize : function() {  
-        },
-        keypress: function(ev) { 
-           if (ev.charCode == 122) { gameModel.newLevel(10); }
-           if (ev.charCode == 120) { magic_varX++; }
-           if (ev.charCode == 99) { magic_varY--; }
-           if (ev.charCode == 118) { magic_varY++; }
-        }
-            
-      });
-      var browserView = new BrowserView();
-        
-        // $('body').keypress(function (){ alert("XX")});
-
-
       editorModel = new EditorModel();
+      var editorCounter = 0;
 
       var EditorView = Backbone.View.extend({  
         el: $("#editor"),
         events : { "keyup" : "keypress" },
         initialize : function () {
           editorModel.on('change', this.render);
+          gameModel.on('change:mouse', this.mousemove);
           editorModel.set('text',$("#editor").val());
           this.render();
         },
         render: function () {
           updateTable("#vars-before",editorModel.get('argsIn'));
           updateTable("#vars-after",editorModel.get('argsOut'));
+        },
+        mousemove : function () {
+          var mouse = gameModel.get('mouse');
+          var args = editorModel.get('argsIn');
+          args.mouseX = mouse.x;
+          args.mouseY = mouse.y;
+          runEditorCode(editorModel.get('text'),args);
+          editorModel.set('counter',editorCounter++); // hack to force the re-eval
         },
         keypress: function() {
           var text = $("#editor").val();
