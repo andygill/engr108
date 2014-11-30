@@ -1,0 +1,223 @@
+\documentclass{beamer}
+
+\usepackage{eecs}
+
+\usepackage[all]{xy}
+\usepackage{xmpmulti}
+\usepackage{pdfpages}
+\usepackage{fancyvrb}
+
+\SaveVerb{bind}+>>=+
+\SaveVerb{from}+<-+
+
+%\renewenvironment{Verbatim}{\verbatim}{\endverbatim}
+% \begin{Verbatim}[fontsize=\footnotesize]
+
+
+\title[CS]{Introduction to Computer Science}
+\author[Andy Gill]{Dr. Andy Gill}
+\institute{Electrical Engineering and Computer Science}
+\date{November 20th \& 22nd}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}
+\frametitle{Computer Science}
+\Large
+
+In this class, we are going to
+
+\frameskip{}
+\begin{itemize}
+\item {\bf Learn} what it means to program a computer
+\item {\bf Learn} basic programming
+\item {\bf Enhance} an existing Program (a simple game)
+\item {\bf Program} a bot (give a virtual agent ``smarts'')
+\end{itemize}
+\frameskip{}
+
+Monday is a lab, in the engineering commons.
+\end{frame}
+
+
+\begin{frame}
+\frametitle{First - who is Andy Gill?}
+\Large
+
+\begin{itemize}
+\item Researcher in the field of programming languages
+\item Ph.D.\ from the University of Glasgow
+\item Spent 12 years in industry as a compiler engineer
+\begin{itemize}
+\item Worked on a Java compiler, a C++ compiler, and a Haskell compiler 
+\item Co-founded a technology startup in Portland, OR, that used Haskell
+\end{itemize}
+\item 6th year as professor at KU; teaching since 2002
+\item Want to share my research interests: Computers and Programming Languages
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Why does we have computers?}
+\Large
+
+\begin{center}
+\href{/Users/andy/git/github/engr108/slides/JobsBike.mov}{?}
+\end{center}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Computer Science is {\bf not}}
+\Large
+Computer Science is {\bf not\/} about programming.
+\frameskip
+
+\begin{itemize}
+\item CS uses programming as a tool to get a job done.
+\item CS uses programming in the same way most engineering subjects use Math.
+\item Furthermore, programming is its own type of Math.
+\item Programming can be executable and/or declarative.
+\end{itemize}
+
+\frameskip
+We are going to see some basic programming today.
+\end{frame}
+
+\begin{frame}
+\frametitle{What does Computer Science using {\bf programming} for?}
+\Large
+\begin{itemize}
+\item Mechanization --- Example: HVAC controller
+\item Simulation --- CS helping others
+\item Graphics --- Users Interfaces
+\item Search --- Finding things
+\item Storage --- ``The Cloud''
+\item The Web --- Online shopping carts
+\end{itemize}
+
+All use programming as a means to an end.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{What does Computer Science using {\bf programming} for?}
+\Large
+
+Think of a single digit number.
+
+\begin{enumerate}
+\item Square it.
+\item Add the result to your original number.
+\item Divide by your original number.
+\item Add, oh, how about 17.
+\item Subtract your original number.
+\item Divide by 6. 
+\end{enumerate}
+
+We are going to automate (program) this.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Picture of Computer}
+\Large
+
+\begin{center}
+\href{/Users/andy/git/github/engr108/slides/LookLeft.mov}{?}
+\end{center}
+
+% Outside world <-> (Processor / Memory) <-> Instructions
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Programming ``Think of a number''}
+
+\begin{codeblock}
+\begin{verbatim}
+// Think of a number.                                                                                                     
+x = 9;
+// Square it.                                                                                                                  
+a = x * x;
+// Add the result to your original number.                                                                                     
+a = a + x;
+// Divide by your original number.                                                                                             
+a = a / x;
+// Add, oh, how about 17.                                                                                                      
+a = a + 17;
+// Subtract your original number.                                                                                              
+a = a - x;
+// Divide by 6.                                                                                                                
+a = a / 6;
+// Print the number to the screen.
+console.log(a);
+\end{verbatim}                
+\end{codeblock}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{2nd Problem - find your direction}
+\Large
+
+\begin{itemize}
+\item You are on a 2-dimensional plane.
+\item You want to point towards another (given) point on the plane.
+\item How do you compute this?
+\end{itemize}
+
+\frameskip
+
+if $x,y$ are your coordinates, then $atan2(y,x)$
+is the direction you are from the origin, in radians.
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Programming ``Find your direction''}
+
+\begin{codeblock}
+\begin{verbatim}
+// Original Coords.
+x = 3; y = 4;
+
+// Target Coords.
+xt = 5; yt = 2;
+
+// Take the difference betweent the vectors.
+xd = xt - x;
+yd = yt - y;
+
+// Compute the radian                                                                                                         
+r = Math.atan2(yd,xd);
+
+// Print the result.
+console.log(r);
+\end{verbatim}                
+\end{codeblock}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Assignment Statements}
+\Large
+\begin{itemize}
+\item We have learned about {\bf assignment statements}.
+\item Assignments give a new value to a named variable.
+\item Assignments compute this new value.
+\item On Friday -- conditionals -- how to choose.
+\item On Monday 
+\begin{itemize}
+\Large
+\item Lab (in Engineering Commons)
+\item Escape from Crater Lake!
+\end{itemize}
+\end{itemize}
+
+\end{frame}
+
+
+\end{document}

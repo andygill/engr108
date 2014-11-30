@@ -1,0 +1,8 @@
+DEST=andygill@drumchapel:.public_html/engr108
+publish:
+	scp -r index.html 	$(DEST)
+	scp -r css/*css 	$(DEST)/css
+	scp -r js/*js 		$(DEST)/js
+	scp -r down/* 		$(DEST)/down
+	scp -r png/*png		$(DEST)/png
+	scp -r fonts/*		$(DEST)/fonts

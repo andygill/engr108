@@ -97,7 +97,7 @@
 
             <h4>Functions</h4>
             
-            <p>The trigonometry <code>sin( ... )</code>, <code>cos( ... )</code>, <code>atan2( ... , ... )</code> are available for you to use.</p>
+            <p>The trigonometry <code>sin( ... )</code>, <code>cos( ... )</code>, <code>atan2( ... , ... )</code> are available for you to use, as well as <code>sqrt( ... )</code>.</p>
 
           </div>
         </div><!-- /.modal-content -->
@@ -269,7 +269,8 @@
         res.cos = Math.cos;
         res.sin = Math.sin;
         res.atan2 = Math.atan2;
-
+        res.sqrt = Math.sqrt;
+        
         var extras = input.match(/[A-Za-z][A-Za-z0-9]*(?=\s*=(?!=))/g);
 
         for(var k in extras) {

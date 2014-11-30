@@ -1,0 +1,20 @@
+\frametitle {Assignment Statements and Conditionals}
+\Large
+\begin{itemize}
+\item We have learned about {\bf assignment statements}.
+\item Assignments give a new value to a named variable.
+\item Assignments compute this new value.
+\frameskip
+\frameskip{}
+\item We have learned about {\bf conditionals}.
+\item Conditionals {\em optionally\/} do assignments.
+\frameskip{}
+\frameskip{}
+\item On Monday
+\begin{itemize}
+\Large
+\item Lab (in Engineering Commons)
+\item Escape from Crater Lake!
+\end{itemize}
+\end{itemize}
+

@@ -1,0 +1,18 @@
+     var radians = function (num) {
+        num = num % (Math.PI * 2);
+        if (num > Math.PI) {
+          num = num - Math.PI * 2;
+        } else if (num <= -Math.PI) {
+          num = num + Math.PI * 2;
+        }
+        return num;
+      }
+q = radians(atan2(y,x));
+v = radians(monster - q);
+if (step == 1) { dir = PI; }
+if (v > 0) { dir = 2; }
+if (v < 0) { dir = -2;}
+if (0) {
+controlX = mouseX - x;
+controlY = mouseY - y;
+dir = atan2(controlY,controlX);  }         

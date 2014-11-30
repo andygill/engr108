@@ -1,0 +1,36 @@
+\usepackage{etex}
+\usetheme{Madrid}
+\useinnertheme[shadow]{rounded} 
+
+\author[Andy Gill]{Dr. Andy Gill}
+\institute{Department of Electrical Engineering \& Computer Science\\University of Kansas}
+\logo{\includegraphics[width=1cm]{KUlogo1C}}
+\setbeamertemplate{footline}[page number]
+
+\newenvironment{codeblock}[1][.8]{%
+\begin{columns}
+\begin{column}{#1\linewidth}
+\begin{exampleblock}{}}{%
+\end{exampleblock}
+\end{column}
+\end{columns}} 
+
+\newenvironment{execblock}[1][.8]{%
+\begin{columns}
+\begin{column}{#1\linewidth}
+\begin{block}{}}{%
+\end{block}
+\end{column}
+\end{columns}} 
+
+\newenvironment{codeblock*}[2][.8]{%
+\begin{columns}
+\begin{column}{#1\linewidth}
+\begin{exampleblock}{#2}}{%
+\end{exampleblock}
+\end{column}
+\end{columns}} 
+
+
+\def\slideskip{\vskip 0.1in}
+\def\frameskip{\vskip 0.1in}
