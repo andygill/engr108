@@ -93,7 +93,7 @@ We are going to see some basic programming today.
 \begin{itemize}
 \item Mechanization --- Example: HVAC controller
 \item Simulation --- CS helping others
-\item Graphics --- Users Interfaces
+\item Graphics --- User Interfaces
 \item Search --- Finding things
 \item Storage --- ``The Cloud''
 \item The Web --- Online shopping carts
@@ -123,14 +123,12 @@ We are going to automate (program) this.
 \end{frame}
 
 \begin{frame}
-\frametitle{Picture of Computer}
-\Large
+\frametitle{What is a Computer?}
+\large
 
-\begin{center}
-\href{/Users/andy/git/github/engr108/slides/LookLeft.mov}{?}
-\end{center}
+``The trouble with computers is, they're very sophisticated idiots. They do exactly what you tell them at amazing speeds.'' 
 
-% Outside world <-> (Processor / Memory) <-> Instructions
+~~~--- The 4th Doctor.
 
 \end{frame}
 
@@ -188,12 +186,12 @@ x = 3; y = 4;
 // Target Coords.
 xt = 5; yt = 2;
 
-// Take the difference betweent the vectors.
+// Take the difference between the vectors.
 xd = xt - x;
 yd = yt - y;
 
 // Compute the radian                                                                                                         
-r = Math.atan2(yd,xd);
+r = atan2(yd,xd);
 
 // Print the result.
 console.log(r);
@@ -202,13 +200,191 @@ console.log(r);
 \end{frame}
 
 \begin{frame}[fragile]
+\frametitle{Types of expressions}
+\Large
+
+Expressions are on the right hand side of assignments.
+
+Numbers:
+\begin{itemize}
+\item {\bf 1, 2, -1, -2, \ldots}
+\end{itemize}
+
+Arithmetic:
+\begin{itemize}
+\item {\bf \verb$+$, \verb$-$, \verb$*$, \verb$/$}
+\end{itemize}
+
+Parenthesis:
+\begin{itemize}
+\item {\bf \verb$($~\ldots~\verb$)$}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
 \frametitle{Assignment Statements}
+\Large
+
+{\centering{\Huge var = expr ;}}
+
+\frameskip{}
+{\bf var} is a variable name. letters and numbers, starting with a letter.
+Upper case is for constant variables, like {\bf PI}.
+\frameskip{}
+{\bf expr} is an expression, like {\bf x + 1}. Complex expressions are allowed,
+as are parenthesis. expressions can contain calls to functions, like {\bf atan2}.
+\frameskip{}
+Remember to close with semi-colon.
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Controlling the boat}
+\Large 
+Task: 
+\begin{itemize}
+\item Make the boat go North.
+\item (Get eaten by monster.)
+\end{itemize}
+\frameskip{}
+\frameskip{}
+\begin{itemize}
+\item Question: Is there a way of escaping?
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{What if we want to do something conditionally?}
+\Large
+Conditionals are a way of making choices.
+
+Task: 
+\begin{itemize}
+\item Assign {\bf x} to -1,0 or 1, depending if {\bf y} is negative, zero, or positive.
+\item Split this problem into three parts first.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Computing absolutes}
+\large
+
+\begin{codeblock}
+\begin{verbatim}
+y = 0;
+if (y < 0) {
+    x = -1;
+}
+
+if (y == 0) {
+    x = 0;
+}
+
+if (y > 0) {
+    x = 1;
+}
+console.log(x);
+\end{verbatim}
+\end{codeblock}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Form of a conditional}
+\large
+
+{\Huge if (condition) \{}\\
+{\Huge ~~~~ assignment; }\\
+{\Huge ~~~~ assignment; }\\
+{\Huge ~~~~ assignment; }\\
+{\Huge \}}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Types of conditions}
+\large
+The boring ones:
+\begin{itemize}
+\item {\bf true, false}
+\end{itemize}
+
+Equality and inequality:
+\begin{itemize}
+\item {\bf \verb$==$, \verb$!=$}
+\end{itemize}
+
+Comparisons:
+\begin{itemize}
+\item {\bf \verb$<$, \verb$<=$, \verb$>$, \verb$>=$}
+\end{itemize}
+
+not!
+\begin{itemize}
+\item {\bf \verb$!$}
+\end{itemize}
+
+Chaining comparisons:
+\begin{itemize}
+\item {\bf \verb$&&$, \verb$||$}
+\end{itemize}
+
+Parenthesis:
+\begin{itemize}
+\item {\bf \verb$($~\ldots~\verb$)$}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Aside\ldots}
+
+\begin{itemize}
+\item Almost everything in computer science can be nested.
+\item {\bf if} statements can contain {\bf if} statements.
+\item {\bf if} statements can contain {\bf if} statements that
+contain {\bf if} statements.
+\item \ldots
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{New task}
+
+Control the boat.
+\begin{itemize}
+\item Make the boat go North.
+\item After 100 {\em steps\/}, make the boat go West.
+\end{itemize}
+
+\frameskip
+
+Advanced:
+\begin{itemize}
+\item Make the boat go North.
+\item After 100 {\em steps\/}, make the boat turn West {\bf gradually}.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Assignment Statements and Conditionals}
 \Large
 \begin{itemize}
 \item We have learned about {\bf assignment statements}.
 \item Assignments give a new value to a named variable.
 \item Assignments compute this new value.
-\item On Friday -- conditionals -- how to choose.
+\frameskip
+\frameskip{}
+\item We have learned about {\bf conditionals}.
+\item Conditionals {\em optionally\/} do assignments.
+\frameskip{}
+\frameskip{}
 \item On Monday 
 \begin{itemize}
 \Large
